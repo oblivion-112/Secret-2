@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:title" content="To: Apple">
+    <meta property="og:description" content="Just a little something I made for you.">
+    <meta name="theme-color" content="#070a0f">
+    <title>A tiny follow up.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #070a0f; 
+            --accent: #ff4d6d;
+            --text-dim: #94a3b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at center, #0f172a 0%, #05070a 100%);
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            cursor: crosshair;
+        }
+
+        .interface {
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+        }
+
+        .glass-box {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            transition: opacity 1.5s ease, transform 1.5s ease;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 2.2rem;
+            color: var(--accent);
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px rgba(255, 77, 109, 0.4);
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+
+        .tap-hint {
+            position: fixed;
+            bottom: 40px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            color: var(--accent);
+            opacity: 0.5;
+            animation: breathe 3s infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bouquetCanvas"></canvas>
+
+    <div class="interface">
+        <div class="glass-box" id="welcomeNote">
+            <h1>For Apple.</h1>
+            <p>I realized I missed a few things. It's a simple program but every bits of petals here describes how amazing you are.</p>
+            <p style="color: var(--accent); font-size: 0.85rem; font-style: italic;">Tap anywhere to see them bloom.</p>
+        </div>
+    </div>
+
+    <div class="tap-hint">Plant a reminder</div>
+
+    <script>
+        const canvas = document.getElementById('bouquetCanvas');
+        const ctx = canvas.getContext('2d');
+        const welcomeNote = document.getElementById('welcomeNote');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let flowers = [];
+        
+        const messages = [
+            "I'm glad you exist.", "You make the world better.", "Your energy is rare.",
+            "You are deeply valued.", "The world is lucky to have you.", "I admire the person you are.",
+            "You matter more than you know.", "I'm rooting for you, always.", "You are a beautiful soul.",
+            "Your presence is a comfort.", "Chin up, pretty. You are valued.", "You are one of a kind.",
+            "You matter.", "You deserve to be celebrated.", "I believe in you.",
+            "You're a genuine blessing.", "Never doubt your worth.", "I appreciate every bit of you.",
+            "You are loved, Apple.", "Just being you is enough."
+        ];
+
+        class Flower {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.bloomSize = 0;
+                this.maxBloom = 35 + Math.random() * 20;
+                this.petals = 8;
+                this.hue = Math.random() * 40 + 335; 
+                this.msg = messages[Math.floor(Math.random() * messages.length)];
+                this.opacity = 0;
+                this.state = 'blooming'; 
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.strokeStyle = "rgba(20, 83, 45, 0.4)"; 
+                ctx.lineWidth = 2;
+                ctx.moveTo(canvas.width / 2, canvas.height + 10); 
+                ctx.quadraticCurveTo(canvas.width / 2, this.y + 100, this.x, this.y);
+                ctx.stroke();
+
+                if (this.state === 'blooming' || this.state === 'done') {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = `hsla(${this.hue}, 90%, 60%, 0.2)`;
+
+                    for (let i = 0; i < this.petals; i++) {
+                        ctx.save();
+                        ctx.translate(this.x, this.y);
+                        ctx.rotate((Math.PI * 2 / this.petals) * i);
+                        let grad = ctx.createLinearGradient(0, 0, this.bloomSize, 0);
+                        grad.addColorStop(0, `hsla(${this.hue}, 90%, 75%, 0.8)`);
+                        grad.addColorStop(1, `hsla(${this.hue}, 90%, 45%, 0.6)`);
+                        ctx.beginPath();
+                        ctx.fillStyle = grad;
+                        ctx.ellipse(this.bloomSize, 0, this.bloomSize, this.bloomSize / 2.2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+
+                    ctx.beginPath();
+                    ctx.fillStyle = "#fbbf24";
+                    ctx.arc(this.x, this.y, this.bloomSize / 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (this.state === 'done') {
+                        ctx.save();
+                        ctx.globalAlpha = this.opacity;
+                        ctx.fillStyle = "#ffffff";
+                        ctx.font = "italic 600 14px Inter";
+                        ctx.textAlign = "center";
+                        ctx.shadowBlur = 4;
+                        ctx.shadowColor = "black";
+                        ctx.fillText(this.msg, this.x, this.y - (this.maxBloom + 20));
+                        ctx.restore();
+                        if (this.opacity < 1) this.opacity += 0.015;
+                    }
+                }
+            }
+
+            update() {
+                if (this.state === 'blooming' && this.bloomSize < this.maxBloom) {
+                    this.bloomSize += 0.8;
+                } else {
+                    this.state = 'done';
+                }
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(7, 10, 15, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            flowers.forEach(flower => { flower.update(); flower.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        function handleInteraction(e) {
+            const x = (e.clientX || (e.touches && e.touches[0].clientX));
+            const y = (e.clientY || (e.touches && e.touches[0].clientY));
+            
+            if(welcomeNote.style.opacity !== '0') {
+                welcomeNote.style.opacity = '0';
+                welcomeNote.style.transform = 'translateY(-20px)';
+                setTimeout(() => { welcomeNote.style.display = 'none'; }, 1000);
+            }
+            flowers.push(new Flower(x, y));
+        }
+
+        canvas.addEventListener('mousedown', handleInteraction);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInteraction(e); });
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+
+    <div style="
+        position: fixed; 
+        bottom: 12px; 
+        right: 15px; 
+        z-index: 5; 
+        pointer-events: none; 
+        text-align: right;
+        font-family: 'Inter', sans-serif;
+        opacity: 0.12; /* Very faint */
+    ">
+        <p style="color: #334155; font-size: 8.5px; line-height: 1.4; font-style: italic;">
+            p.s. i left this tiny hint on the program.<br>
+            we're mutuals everywhere except in one place... <br>
+            knowing this might be a bit awkward.
+        </p>
+    </div>
+</body>
+</html>
